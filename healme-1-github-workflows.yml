@@ -1,0 +1,40 @@
+name: Save Generation
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  save-generation:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Create Generation File
+        run: |
+          mkdir -p data/generations
+          TIMESTAMP=$(date +"%Y-%m-%d_%H:%M:%S")
+          GENERATION_NUM=$(ls -1 data/generations/generation_*.md 2>/dev/null | wc -l)
+          GENERATION_NUM=$((GENERATION_NUM + 1))
+          
+          cat > data/generations/generation_${GENERATION_NUM}.md << 'EOF'
+          # HealMe Generation ${GENERATION_NUM}
+          
+          **생성일**: ${TIMESTAMP}
+          **상태**: Auto-saved
+          **버전**: v$(date +%s)
+          EOF
+      
+      - name: Commit and Push
+        run: |
+          git config --local user.email "healme@github.com"
+          git config --local user.name "HealMe Bot"
+          git add data/generations/
+          git commit -m "Auto-save generation $(date +%Y-%m-%d_%H:%M:%S)" || echo "No changes to commit"
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,27 @@
+{
+  "name": "healme-website",
+  "version": "4.0.0",
+  "description": "HealMe - Say My Name. 약한 모든 것들을 지키는 AI",
+  "main": "api/healme-2-chat.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "test": "node test.js"
+  },
+  "keywords": [
+    "healme",
+    "ai",
+    "chat",
+    "openai",
+    "특허2"
+  ],
+  "author": "HealMe Team",
+  "license": "MIT",
+  "dependencies": {
+    "openai": "^4.52.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": "18.x"
+  }
+}

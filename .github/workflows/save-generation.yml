@@ -1,8 +1,7 @@
-name: Auto Save Generation
+name: Auto Save Generation - Every 5 Minutes
 on:
   schedule:
-    # 매 시간 0분에 실행
-    - cron: '0 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 jobs:
   save-generation:
@@ -19,24 +18,24 @@ jobs:
           node-version: '18'
       - name: Update data.json with current generation
         run: |
-          # 현재 generation 번호를 읽음
           CURRENT_GEN=$(jq '.current_generation' data.json)
           LAST_UPDATED=$(date -u +'%Y-%m-%dT%H:%M:%S+09:00')
           
-          # data.json 업데이트
-          jq ".last_updated = \"$LAST_UPDATED\" | .status = \"active\"" data.json > data.json.tmp
+          jq ".last_updated = \"$LAST_UPDATED\" | .status = \"active\" | .auto_save_count = (.auto_save_count // 0) + 1" data.json > data.json.tmp
           mv data.json.tmp data.json
       - name: Create CHANGELOG entry
         run: |
           TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M:%S')
           GEN=$(jq '.current_generation' data.json)
+          SAVE_COUNT=$(jq '.auto_save_count' data.json)
           
-          echo "## Generation $GEN - $TIMESTAMP" >> CHANGELOG.md
+          echo "## Generation $GEN - Auto Save #$SAVE_COUNT - $TIMESTAMP" >> CHANGELOG.md
           echo "" >> CHANGELOG.md
           echo "- Status: Active" >> CHANGELOG.md
           echo "- Last Updated: $TIMESTAMP KST" >> CHANGELOG.md
           echo "- API: Operational" >> CHANGELOG.md
           echo "- Constancy Patterns: Trained & Active" >> CHANGELOG.md
+          echo "- Save Frequency: Every 5 minutes" >> CHANGELOG.md
           echo "" >> CHANGELOG.md
       - name: Commit changes
         run: |
@@ -47,7 +46,8 @@ jobs:
           git add CHANGELOG.md
           
           TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M:%S KST')
-          git commit -m "Auto Save: Generation $(jq '.current_generation' data.json) - $TIMESTAMP" || echo "No changes to commit"
+          SAVE_COUNT=$(jq '.auto_save_count' data.json)
+          git commit -m "Auto Save #$SAVE_COUNT: Generation $(jq '.current_generation' data.json) - $TIMESTAMP (Every 5 min)" || echo "No changes to commit"
           
       - name: Push changes
         uses: ad-m/github-push-action@master

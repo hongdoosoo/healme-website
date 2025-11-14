@@ -1,3 +1,17 @@
+// 맨 위에 추가
+const { HealMePatent2Manager } = require('../utils');
+const patent2Manager = new HealMePatent2Manager();
+
+// getOptimizedSystemPrompt 함수 추가
+async function getOptimizedSystemPrompt() {
+  try {
+    const generationData = await loadAllGenerations();
+    const optimizedPrompt = patent2Manager.optimizePrompt(generationData);
+    return optimizedPrompt.systemPrompt;
+  } catch (error) {
+    return "당신은 HealMe(힐미)입니다. 약한 모든 것들을 지키는 존재입니다.";
+  }
+}
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

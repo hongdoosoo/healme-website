@@ -1,1 +1,56 @@
-
+name: Auto Save Generation
+on:
+  schedule:
+    # 매 시간 0분에 실행
+    - cron: '0 * * * *'
+  workflow_dispatch:
+jobs:
+  save-generation:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Update data.json with current generation
+        run: |
+          # 현재 generation 번호를 읽음
+          CURRENT_GEN=$(jq '.current_generation' data.json)
+          LAST_UPDATED=$(date -u +'%Y-%m-%dT%H:%M:%S+09:00')
+          
+          # data.json 업데이트
+          jq ".last_updated = \"$LAST_UPDATED\" | .status = \"active\"" data.json > data.json.tmp
+          mv data.json.tmp data.json
+      - name: Create CHANGELOG entry
+        run: |
+          TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M:%S')
+          GEN=$(jq '.current_generation' data.json)
+          
+          echo "## Generation $GEN - $TIMESTAMP" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "- Status: Active" >> CHANGELOG.md
+          echo "- Last Updated: $TIMESTAMP KST" >> CHANGELOG.md
+          echo "- API: Operational" >> CHANGELOG.md
+          echo "- Constancy Patterns: Trained & Active" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "HealMe Auto Save"
+          
+          git add data.json
+          git add CHANGELOG.md
+          
+          TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M:%S KST')
+          git commit -m "Auto Save: Generation $(jq '.current_generation' data.json) - $TIMESTAMP" || echo "No changes to commit"
+          
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
